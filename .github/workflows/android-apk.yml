@@ -1,0 +1,56 @@
+name: Build Studio Canvas APK
+
+on:
+  push:
+    branches: [studio-canvas-android]
+    paths:
+      - 'android-app/**'
+      - '.github/workflows/android-apk.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore Android source
+        run: |
+          cat android-app/source-parts/part*.b64 > /tmp/studio-canvas.tar.gz.b64
+          base64 --decode /tmp/studio-canvas.tar.gz.b64 > /tmp/studio-canvas.tar.gz
+          echo "09de3699772c7a17d51147eeaf7ea9f87e1005a915ac2bbe0a000c8f502d9d0a  /tmp/studio-canvas.tar.gz" | sha256sum -c -
+          mkdir -p android-app/project
+          tar -xzf /tmp/studio-canvas.tar.gz -C android-app/project
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Build installable debug APK
+        working-directory: android-app/project
+        run: gradle :app:assembleDebug --stacktrace
+
+      - name: Prepare artifact
+        run: |
+          mkdir -p android-app/dist
+          cp android-app/project/app/build/outputs/apk/debug/app-debug.apk android-app/dist/StudioCanvas-Android-v0.2.apk
+          sha256sum android-app/dist/StudioCanvas-Android-v0.2.apk > android-app/dist/SHA256.txt
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: StudioCanvas-Android-v0.2
+          path: android-app/dist/*
+          if-no-files-found: error
