@@ -38,6 +38,7 @@ import {
   ChevronLeft,
   Menu,
   FileText,
+  FilePenLine,
   Plus,
   Wrench,
   Command,
@@ -60,6 +61,7 @@ const getNavigation = (t: TranslationKeys) => [
   {
     title: t.navigation.create,
     items: [
+      { name: t.navigation.documents, href: '/documents', icon: FilePenLine },
       { name: t.navigation.podcasts, href: '/podcasts', icon: Mic },
     ],
   },

@@ -1,5 +1,7 @@
 <a id="readme-top"></a>
 
+> **Chat IQ Documents:** see [the implementation and iPad/ChatGPT setup](docs/iq-documents.md) for the AI-native editor, full DOCX mode, and remote MCP.
+
 <!-- [![Contributors][contributors-shield]][contributors-url] -->
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]

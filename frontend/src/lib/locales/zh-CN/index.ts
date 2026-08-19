@@ -216,6 +216,7 @@ export const zhCN = {
     sources: "来源",
     notebooks: "笔记本",
     askAndSearch: "询问与搜索",
+    documents: "文档",
     search: "搜索",
     ask: "提问",
     podcasts: "播客",

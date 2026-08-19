@@ -1,0 +1,25 @@
+{
+  "name": "Chat IQ Documents",
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "forwardPorts": [8502, 5055, 8080],
+  "portsAttributes": {
+    "8502": {
+      "label": "Chat IQ Documents",
+      "onAutoForward": "notify"
+    },
+    "5055": {
+      "label": "Chat IQ API and MCP",
+      "onAutoForward": "notify"
+    },
+    "8080": {
+      "label": "ONLYOFFICE Document Server",
+      "onAutoForward": "silent"
+    }
+  },
+  "hostRequirements": {
+    "memory": "8gb"
+  }
+}

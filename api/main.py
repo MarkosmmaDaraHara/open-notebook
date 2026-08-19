@@ -12,11 +12,14 @@ from loguru import logger
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from api.auth import PasswordAuthMiddleware
+from api.mcp_auth import mcp_manages_its_own_access
+from api.mcp_documents import document_mcp_app
 from api.routers import (
     auth,
     chat,
     config,
     context,
+    documents,
     embedding,
     embedding_rebuild,
     episode_profiles,
@@ -82,10 +85,18 @@ async def lifespan(app: FastAPI):
     logger.info("API shutdown complete")
 
 
+@asynccontextmanager
+async def application_lifespan(app: FastAPI):
+    """Run the core API and mounted MCP session managers together."""
+    async with lifespan(app):
+        async with document_mcp_app.lifespan(document_mcp_app):
+            yield
+
+
 app = FastAPI(
     title="Open Notebook API",
-    description="API for Open Notebook - Research Assistant",
-    lifespan=lifespan,
+    description="API for Open Notebook and Chat IQ Documents",
+    lifespan=application_lifespan,
 )
 
 # Add password authentication middleware first
@@ -101,6 +112,19 @@ app.add_middleware(
         "/api/auth/status",
         "/api/config",
     ],
+    excluded_path_prefixes=(
+        [
+            "/mcp",
+            "/.well-known/",
+            "/authorize",
+            "/token",
+            "/register",
+            "/consent",
+            "/auth/callback",
+        ]
+        if mcp_manages_its_own_access()
+        else []
+    ),
 )
 
 # Add CORS middleware last (so it processes first)
@@ -132,7 +156,8 @@ async def custom_http_exception_handler(request: Request, exc: StarletteHTTPExce
         status_code=exc.status_code,
         content={"detail": exc.detail},
         headers={
-            **(exc.headers or {}), "Access-Control-Allow-Origin": origin,
+            **(exc.headers or {}),
+            "Access-Control-Allow-Origin": origin,
             "Access-Control-Allow-Credentials": "true",
             "Access-Control-Allow-Methods": "*",
             "Access-Control-Allow-Headers": "*",
@@ -162,7 +187,7 @@ app.include_router(episode_profiles.router, prefix="/api", tags=["episode-profil
 app.include_router(speaker_profiles.router, prefix="/api", tags=["speaker-profiles"])
 app.include_router(chat.router, prefix="/api", tags=["chat"])
 app.include_router(source_chat.router, prefix="/api", tags=["source-chat"])
-
+app.include_router(documents.router, prefix="/api", tags=["iq-documents"])
 
 @app.get("/")
 async def root():
@@ -172,3 +197,8 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "healthy"}
+
+
+# Keep this final mount after every FastAPI route. The MCP sub-application owns
+# /mcp plus its root-level OAuth discovery and authorization endpoints.
+app.mount("/", document_mcp_app)
