@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/components/providers/QueryProvider";
@@ -9,11 +8,9 @@ import { ConnectionGuard } from "@/components/common/ConnectionGuard";
 import { themeScript } from "@/lib/theme-script";
 import { I18nProvider } from "@/components/providers/I18nProvider";
 
-const inter = Inter({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
-  title: "Open Notebook",
-  description: "Privacy-focused research and knowledge management",
+  title: "Chat IQ",
+  description: "AI-native documents and knowledge workspace",
 };
 
 export default function RootLayout({
@@ -26,7 +23,7 @@ export default function RootLayout({
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className={inter.className}>
+      <body className="font-sans">
         <ErrorBoundary>
           <ThemeProvider>
             <QueryProvider>

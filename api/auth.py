@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Optional
 
 from fastapi import Depends, HTTPException, Request
@@ -13,7 +14,12 @@ class PasswordAuthMiddleware(BaseHTTPMiddleware):
     Only active when OPEN_NOTEBOOK_PASSWORD environment variable is set.
     """
 
-    def __init__(self, app, excluded_paths: Optional[list] = None):
+    def __init__(
+        self,
+        app,
+        excluded_paths: Optional[list] = None,
+        excluded_path_prefixes: Optional[list] = None,
+    ):
         super().__init__(app)
         self.password = os.environ.get("OPEN_NOTEBOOK_PASSWORD")
         self.excluded_paths = excluded_paths or [
@@ -23,6 +29,7 @@ class PasswordAuthMiddleware(BaseHTTPMiddleware):
             "/openapi.json",
             "/redoc",
         ]
+        self.excluded_path_prefixes = excluded_path_prefixes or []
 
     async def dispatch(self, request: Request, call_next):
         # Skip authentication if no password is set
@@ -31,6 +38,20 @@ class PasswordAuthMiddleware(BaseHTTPMiddleware):
 
         # Skip authentication for excluded paths
         if request.url.path in self.excluded_paths:
+            return await call_next(request)
+
+        if any(
+            request.url.path.startswith(prefix)
+            for prefix in self.excluded_path_prefixes
+        ):
+            return await call_next(request)
+
+        # ONLYOFFICE uses its own short-lived JWT on these machine-to-machine
+        # routes. Their route handlers validate that token before returning data.
+        if re.fullmatch(
+            r"/api/documents/[a-f0-9-]{20,64}/(?:file|onlyoffice/callback)",
+            request.url.path,
+        ):
             return await call_next(request)
 
         # Skip authentication for CORS preflight requests (OPTIONS)

@@ -216,6 +216,7 @@ export const zhTW = {
     sources: "來源",
     notebooks: "筆記本",
     askAndSearch: "詢問與搜尋",
+    documents: "文件",
     search: "搜尋",
     ask: "提問",
     podcasts: "播客",

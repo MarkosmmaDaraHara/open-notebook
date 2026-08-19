@@ -1,0 +1,52 @@
+name: chat-iq
+
+services:
+  chat_iq:
+    build:
+      context: .
+      dockerfile: Dockerfile.single
+    ports:
+      - "8502:8502"
+      - "5055:5055"
+    environment:
+      SURREAL_URL: ws://localhost:8000/rpc
+      API_URL: ${API_URL:-http://localhost:5055}
+      OPEN_NOTEBOOK_PASSWORD: ${OPEN_NOTEBOOK_PASSWORD:-}
+      IQ_DOCUMENTS_DIR: /app/data/iq-documents
+      ONLYOFFICE_DOCUMENT_SERVER_URL: ${ONLYOFFICE_DOCUMENT_SERVER_URL:-http://localhost:8080}
+      IQ_PUBLIC_API_URL: http://chat_iq:5055
+      ONLYOFFICE_JWT_SECRET: ${ONLYOFFICE_JWT_SECRET:-change-this-before-public-use}
+      ONLYOFFICE_CALLBACK_HOSTS: onlyoffice,localhost
+      IQ_ALLOW_UNSIGNED_DOCUMENT_URLS: "false"
+      IQ_MCP_AUTH_MODE: ${IQ_MCP_AUTH_MODE:-password}
+      IQ_MCP_PUBLIC_URL: ${IQ_MCP_PUBLIC_URL:-http://localhost:5055}
+      IQ_MCP_GITHUB_CLIENT_ID: ${IQ_MCP_GITHUB_CLIENT_ID:-}
+      IQ_MCP_GITHUB_CLIENT_SECRET: ${IQ_MCP_GITHUB_CLIENT_SECRET:-}
+      IQ_MCP_GITHUB_LOGIN: ${IQ_MCP_GITHUB_LOGIN:-}
+      IQ_MCP_JWT_SIGNING_KEY: ${IQ_MCP_JWT_SIGNING_KEY:-}
+      FASTMCP_HOME: /app/data/fastmcp
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    volumes:
+      - chat_iq_data:/app/data
+      - chat_iq_surreal:/mydata
+    depends_on:
+      - onlyoffice
+    restart: unless-stopped
+
+  onlyoffice:
+    image: ${ONLYOFFICE_IMAGE:-onlyoffice/documentserver:9.3.1.2}
+    ports:
+      - "8080:80"
+    environment:
+      JWT_ENABLED: "true"
+      JWT_SECRET: ${ONLYOFFICE_JWT_SECRET:-change-this-before-public-use}
+    volumes:
+      - onlyoffice_data:/var/www/onlyoffice/Data
+      - onlyoffice_logs:/var/log/onlyoffice
+    restart: unless-stopped
+
+volumes:
+  chat_iq_data:
+  chat_iq_surreal:
+  onlyoffice_data:
+  onlyoffice_logs:
